@@ -1,61 +1,57 @@
 class Vacancy:
     """Класс для представления вакансий"""
 
-    __slots__ = ("__title", "vacancy_url", "min_salary", "max_salary", "description")
+    def __init__(self, name: str, alternate_url: str, salary_from: int, salary_to: int, requirement: str):
+        self.name = name
+        self.alternate_url = alternate_url
+        self.salary_from = self._validate_salary(salary_from)
+        self.salary_to = self._validate_salary(salary_to)
+        self.requirement = requirement
 
-    def __init__(self, title: str, vacancy_url: str, min_salary: int, max_salary: int, description: str):
-        self.__title = title
-        self.vacancy_url = vacancy_url
-        self.min_salary = self._validate_salary(min_salary)
-        self.max_salary = self._validate_salary(max_salary)
-        self.description = description
-
-    @property
-    def title(self) -> str:
-        return self.__title
-
-    def _validate_salary(self, salary_value: int) -> int:
+    def _validate_salary(self, salary_value) -> int:
         """Проверяет корректность значения зарплаты"""
-        if isinstance(salary_value, (int, float)) and salary_value > 0:
-            return salary_value
-        return 0
+        try:
+            salary = int(salary_value)
+            return salary if salary > 0 else 0
+        except (ValueError, TypeError):
+            return 0
 
-    def get_vacancy_data(self) -> dict:
-        """Возвращает данные вакансии в виде словаря"""
+    def main_data(self) -> dict:
+        """Возвращает основные данные вакансии"""
         return {
-            "title": self.__title,
-            "url": self.vacancy_url,
-            "min_salary": self.min_salary,
-            "max_salary": self.max_salary,
-            "requirements": self.description,
+            "name": self.name,
+            "alternate_url": self.alternate_url,
+            "salary_from": self.salary_from,
+            "salary_to": self.salary_to,
+            "snippet": {"requirement": self.requirement},
         }
 
     def __str__(self) -> str:
         """Строковое представление вакансии"""
         return f"""
         ========================================================================
-        Вакансия: {self.__title}
-        Ссылка: {self.vacancy_url}
-        Зарплата: от {self.min_salary} до {self.max_salary}
-        Требования: {self.description}
+        Название: {self.name}
+        Ссылка: {self.alternate_url}
+        Зарплата от {self.salary_from} до {self.salary_to}
+        Описание: {self.requirement}
         ========================================================================
         """
 
     # Методы сравнения вакансий по зарплате
     def __eq__(self, other):
-        return self.min_salary == other.min_salary
+        return self.salary_from == other.salary_from
 
     def __ne__(self, other):
-        return self.min_salary != other.min_salary
+        return self.salary_from != other.salary_from
 
     def __lt__(self, other):
-        return self.min_salary < other.min_salary
+        return self.salary_from < other.salary_from
 
     def __gt__(self, other):
-        return self.min_salary > other.min_salary
+        return self.salary_from > other.salary_from
 
     def __le__(self, other):
-        return self.min_salary <= other.min_salary
+        return self.salary_from <= other.salary_from
 
     def __ge__(self, other):
-        return self.min_salary >= other.min_salary
+        return self.salary_from >= other.salary_from
