@@ -25,7 +25,7 @@ class BaseSaver(ABC):
 class JSONSaver(BaseSaver):
     def __init__(self, vacancies_data: dict, filename: str = "vacancies"):
         self.vacancies_data = vacancies_data
-        self.__filename = f"{filename}.json" if not filename.endswith('.json') else filename
+        self.__filename = f"{filename}.json" if not filename.endswith(".json") else filename
         self.__ensure_directory_exists()
 
     def __ensure_directory_exists(self):
@@ -34,7 +34,7 @@ class JSONSaver(BaseSaver):
 
     def read_file(self) -> dict:
         try:
-            with open(self.__filename, 'r', encoding='utf-8') as f:
+            with open(self.__filename, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             return {"vacancies": []}
@@ -47,17 +47,16 @@ class JSONSaver(BaseSaver):
         # Добавляем новые вакансии
         new_vacancies = []
         for vacancy in self.vacancies_data.get("items", []):
-            if not any(v.get("alternate_url") == vacancy.get("alternate_url")
-                       for v in data.get("vacancies", [])):
+            if not any(v.get("alternate_url") == vacancy.get("alternate_url") for v in data.get("vacancies", [])):
                 new_vacancies.append(vacancy)
 
         data["vacancies"].extend(new_vacancies)
 
-        with open(self.__filename, 'w', encoding='utf-8') as f:
+        with open(self.__filename, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def clear_file(self):
-        with open(self.__filename, 'w', encoding='utf-8') as f:
+        with open(self.__filename, "w", encoding="utf-8") as f:
             json.dump({"vacancies": []}, f)
 
     def add_vacancy(self, vacancy_data: dict):
@@ -68,5 +67,5 @@ class JSONSaver(BaseSaver):
         data = self.read_file()
         if not any(v == vacancy_data for v in data.get("vacancies", [])):
             data["vacancies"].append(vacancy_data)
-            with open(self.__filename, 'w', encoding='utf-8') as f:
+            with open(self.__filename, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)

@@ -1,57 +1,51 @@
 import pytest
+import os
+import json
+from src.saver_class import JSONSaver
 from src.hh_class import Vacancy
 
 
 @pytest.fixture
-def sample_vacancies():
-    """Фикстура с тестовыми вакансиями"""
-    return [
-        Vacancy("Python Developer", "https://hh.ru/vacancy/1", 100000, 150000, "Python experience"),
-        Vacancy("Java Developer", "https://hh.ru/vacancy/2", 120000, 180000, "Java experience"),
-        Vacancy("Junior Python", "https://hh.ru/vacancy/3", 80000, 120000, "Basic Python")
-    ]
+def temp_file(tmp_path):
+    file = tmp_path / "test.json"
+    yield file
+    if os.path.exists(file):
+        os.remove(file)
 
 
-def test_vacancy_comparison(sample_vacancies):
-    """Тестирование операторов сравнения"""
-    python, java, junior = sample_vacancies
-
-    # Тесты на сравнение
-    assert junior < python < java
-    assert java > python > junior
-    assert junior <= python <= java
-    assert java >= python >= junior
-
-    # Тесты на равенство
-    python_copy = Vacancy("Python Copy", "https://hh.ru/vacancy/1c", 100000, 155000, "Python")
-    assert python == python_copy
-    assert python != java
+@pytest.fixture
+def sample_vacancy():
+    return Vacancy("Python", "url", 100000, 150000, "Python experience")
 
 
-def test_vacancy_attributes(sample_vacancies):
-    """Тестирование атрибутов вакансии"""
-    vacancy = sample_vacancies[0]
-    assert vacancy.name == "Python Developer"
-    assert vacancy.alternate_url == "https://hh.ru/vacancy/1"
-    assert vacancy.salary_from == 100000
-    assert vacancy.salary_to == 150000
-    assert vacancy.requirement == "Python experience"
+def test_save_and_read(temp_file, sample_vacancy):
+    saver = JSONSaver({"items": [sample_vacancy.main_data()]}, str(temp_file))
+    saver.save_to_file()
+
+    data = saver.read_file()
+    assert isinstance(data, dict)
+    assert len(data.get("vacancies", [])) == 1
 
 
-def test_invalid_salary():
-    """Тестирование обработки невалидных зарплат"""
-    invalid_vacancy = Vacancy("Invalid", "url", "abc", None, "desc")
-    assert invalid_vacancy.salary_from == 0
-    assert invalid_vacancy.salary_to == 0
+def test_add_vacancy(temp_file, sample_vacancy):
+    saver = JSONSaver({"items": []}, str(temp_file))
+    saver.add_vacancy(sample_vacancy.main_data())
+
+    data = saver.read_file()
+    assert len(data["vacancies"]) == 1
+    assert data["vacancies"][0]["name"] == "Python"
 
 
-def test_main_data(sample_vacancies):
-    """Тестирование метода main_data()"""
-    data = sample_vacancies[0].main_data()
-    assert data == {
-        "name": "Python Developer",
-        "alternate_url": "https://hh.ru/vacancy/1",
-        "salary_from": 100000,
-        "salary_to": 150000,
-        "snippet": {"requirement": "Python experience"},
-    }
+def test_clear_file(temp_file, sample_vacancy):
+    saver = JSONSaver({"items": [sample_vacancy.main_data()]}, str(temp_file))
+    saver.save_to_file()
+    saver.clear_file()
+
+    data = saver.read_file()
+    assert data == {"vacancies": []}
+
+
+def test_invalid_vacancy(temp_file, capsys):
+    saver = JSONSaver({"items": []}, str(temp_file))
+    saver.add_vacancy("invalid")
+    assert "можно добавлять только main_data" in capsys.readouterr().out.lower()

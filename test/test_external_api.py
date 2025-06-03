@@ -47,19 +47,10 @@ class HeadHunterAPI(BaseAPI):
             print(f"Сервер недоступен. Код ошибки: {status_code}")
             return None
 
-        params = {
-            "text": search_query,
-            "per_page": top_n,
-            "search_field": "name",
-            "page": 0
-        }
+        params = {"text": search_query, "per_page": top_n, "search_field": "name", "page": 0}
 
         try:
-            response = requests.get(
-                url=self.__api_url,
-                params=params,
-                headers={"User-Agent": "HH-User-Agent"}
-            )
+            response = requests.get(url=self.__api_url, params=params, headers={"User-Agent": "HH-User-Agent"})
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:

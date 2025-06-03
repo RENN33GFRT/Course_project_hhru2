@@ -1,5 +1,6 @@
 from functools import total_ordering
 
+
 @total_ordering
 class Vacancy:
     """Класс для представления вакансий"""
