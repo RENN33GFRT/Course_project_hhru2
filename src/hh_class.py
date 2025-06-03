@@ -1,3 +1,6 @@
+from functools import total_ordering
+
+@total_ordering
 class Vacancy:
     """Класс для представления вакансий"""
 
@@ -28,30 +31,23 @@ class Vacancy:
 
     def __str__(self) -> str:
         """Строковое представление вакансии"""
-        return f"""
-        ========================================================================
-        Название: {self.name}
-        Ссылка: {self.alternate_url}
-        Зарплата от {self.salary_from} до {self.salary_to}
-        Описание: {self.requirement}
-        ========================================================================
-        """
+        return (
+            "    =========================================================================\n"
+            f"    Название: {self.name}\n"
+            f"    Ссылка: {self.alternate_url}\n"
+            f"    Зарплата от {self.salary_from} до {self.salary_to}\n"
+            f"    Описание: {self.requirement}\n"
+            "    ========================================================================="
+        )
 
-    # Методы сравнения вакансий по зарплате
     def __eq__(self, other):
+        """Проверка равенства по минимальной зарплате"""
+        if not isinstance(other, Vacancy):
+            return NotImplemented
         return self.salary_from == other.salary_from
 
-    def __ne__(self, other):
-        return self.salary_from != other.salary_from
-
     def __lt__(self, other):
+        """Сравнение по минимальной зарплате"""
+        if not isinstance(other, Vacancy):
+            return NotImplemented
         return self.salary_from < other.salary_from
-
-    def __gt__(self, other):
-        return self.salary_from > other.salary_from
-
-    def __le__(self, other):
-        return self.salary_from <= other.salary_from
-
-    def __ge__(self, other):
-        return self.salary_from >= other.salary_from

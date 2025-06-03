@@ -1,16 +1,10 @@
 import json
 import os
 from abc import ABC, abstractmethod
-from src.hh_class import Vacancy
+from typing import Any
 
 
-class BaseSaver(ABC):  # pragma: no cover
-    """Абстрактный класс для сохранения данных"""
-
-    @abstractmethod
-    def __init__(self, vacancies_data, filename="vacancies"):
-        pass
-
+class BaseSaver(ABC):
     @abstractmethod
     def save_to_file(self):
         pass
@@ -29,89 +23,50 @@ class BaseSaver(ABC):  # pragma: no cover
 
 
 class JSONSaver(BaseSaver):
-    """Класс для работы с вакансиями в JSON-файле"""
-
     def __init__(self, vacancies_data: dict, filename: str = "vacancies"):
         self.vacancies_data = vacancies_data
-        self.__filename = filename
+        self.__filename = f"{filename}.json" if not filename.endswith('.json') else filename
+        self.__ensure_directory_exists()
+
+    def __ensure_directory_exists(self):
+        """Создает директорию, если она не существует"""
+        os.makedirs(os.path.dirname(self.__filename), exist_ok=True)
 
     def read_file(self) -> dict:
-        """Читает данные из файла"""
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(base_dir, "..", "data")
-        file_path = os.path.join(data_dir, f"{self.__filename}.json")
-
         try:
-            with open(file_path, encoding="utf-8") as file:
-                return json.load(file)
+            with open(self.__filename, 'r', encoding='utf-8') as f:
+                return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             return {"vacancies": []}
 
     def save_to_file(self):
-        """Сохраняет вакансии в файл"""
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(base_dir, "..", "data")
-        file_path = os.path.join(data_dir, f"{self.__filename}.json")
+        data = self.read_file()
+        if not isinstance(data, dict):
+            data = {"vacancies": []}
 
-        existing_data = self.read_file()
-        if not isinstance(existing_data, dict) or 'vacancies' not in existing_data:
-            existing_data = {"vacancies": []}
-
-        existing_vacancies = {(item.get("title"), item.get("url")) for item in existing_data['vacancies']}
+        # Добавляем новые вакансии
         new_vacancies = []
+        for vacancy in self.vacancies_data.get("items", []):
+            if not any(v.get("alternate_url") == vacancy.get("alternate_url")
+                       for v in data.get("vacancies", [])):
+                new_vacancies.append(vacancy)
 
-        for vacancy in self.vacancies_data["items"]:
-            salary_from = vacancy.get("salary", {}).get("from", 0) or 0
-            salary_to = vacancy.get("salary", {}).get("to", 0) or 0
+        data["vacancies"].extend(new_vacancies)
 
-            vacancy_obj = Vacancy(
-                vacancy["name"],
-                vacancy["alternate_url"],
-                salary_from,
-                salary_to,
-                vacancy["snippet"].get("requirement", "")
-            )
-
-            vacancy_key = (vacancy_obj.title, vacancy_obj.vacancy_url)
-            if vacancy_key not in existing_vacancies:
-                new_vacancies.append(vacancy_obj.get_vacancy_data())
-                existing_vacancies.add(vacancy_key)
-
-        existing_data['vacancies'].extend(new_vacancies)
-
-        os.makedirs(data_dir, exist_ok=True)
-        with open(file_path, "w", encoding="utf-8") as file:
-            json.dump(existing_data, file, ensure_ascii=False, indent=2)
+        with open(self.__filename, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
 
     def clear_file(self):
-        """Очищает файл с вакансиями"""
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(base_dir, "..", "data")
-        file_path = os.path.join(data_dir, f"{self.__filename}.json")
-
-        os.makedirs(data_dir, exist_ok=True)
-        with open(file_path, "w", encoding="utf-8") as file:
-            json.dump({"vacancies": []}, file)
+        with open(self.__filename, 'w', encoding='utf-8') as f:
+            json.dump({"vacancies": []}, f)
 
     def add_vacancy(self, vacancy_data: dict):
-        """Добавляет одну вакансию в файл"""
         if not isinstance(vacancy_data, dict):
             print("Можно добавлять только main_data из класса Vacancy")
             return
 
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(base_dir, "..", "data")
-        file_path = os.path.join(data_dir, f"{self.__filename}.json")
-
-        try:
-            with open(file_path, encoding="utf-8") as file:
-                data = json.load(file)
-        except (FileNotFoundError, json.JSONDecodeError):
-            data = {"vacancies": []}
-
-        if not any(v == vacancy_data for v in data["vacancies"]):
+        data = self.read_file()
+        if not any(v == vacancy_data for v in data.get("vacancies", [])):
             data["vacancies"].append(vacancy_data)
-
-        os.makedirs(data_dir, exist_ok=True)
-        with open(file_path, "w", encoding="utf-8") as file:
-            json.dump(data, file, ensure_ascii=False, indent=2)
+            with open(self.__filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
