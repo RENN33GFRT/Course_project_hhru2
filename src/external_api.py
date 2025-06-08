@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, List
 import requests
 
 
@@ -16,7 +15,7 @@ class BaseAPI(ABC):
         pass
 
     @abstractmethod
-    def get_vacancies(self, search_query: str, top_n: int = 100) -> Any:
+    def get_vacancies(self, search_query: str, top_n: int = 100) -> dict:
         """Получение вакансий по поисковому запросу"""
         pass
 
@@ -36,7 +35,7 @@ class HeadHunterAPI(BaseAPI):
         except requests.RequestException:
             return False
 
-    def get_vacancies(self, search_query: str, top_n: int = 100) -> Optional[Dict[str, Any]]:
+    def get_vacancies(self, search_query: str, top_n: int = 100) -> dict | None:
         """
         Получение вакансий с HH API
         :param search_query: Поисковый запрос
@@ -75,7 +74,7 @@ class BaseVacancy(ABC):
         pass
 
     @abstractmethod
-    def get_vacancy_data(self) -> Dict[str, Any]:
+    def get_vacancy_data(self) -> dict:
         """Возвращает данные вакансии в виде словаря"""
         pass
 
@@ -128,7 +127,7 @@ class Vacancy(BaseVacancy):
             return int(salary_value)
         return 0
 
-    def get_vacancy_data(self) -> Dict[str, Any]:
+    def get_vacancy_data(self) -> dict:
         """
         Возвращает данные вакансии в виде словаря
 
@@ -142,7 +141,7 @@ class Vacancy(BaseVacancy):
             "requirements": self.description,
         }
 
-    def get_main_data(self) -> Dict[str, Any]:
+    def get_main_data(self) -> dict:
         """
         Возвращает основные данные вакансии в формате для теста
 
