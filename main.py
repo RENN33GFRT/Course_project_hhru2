@@ -1,30 +1,58 @@
-from src.external_api import API_HH
-from src.filter import filter_word
-from src.hh_class import Vacancy
-from src.saver_class import File_Save
+from src.external_api import Vacancy as ExternalVacancy
+from src.hh_class import Vacancy as HHVacancy
+from src.filter import filter_vacancies
+from src.saver_class import JSONSaver
 
 
 def main():
-    """Основная программа где происходят почти все действия с классами и функциями"""
-    search_query = input("Введите поисковый запрос: ")
-    top_n = int(input("Введите количество вакансий для вывода в топ N: "))
-    filter_words = input("Введите ключевые слова для фильтрации вакансий (через пробел): ").split()
+    # Пример использования классов и функций
+    vacancy_data = {
+        "items": [
+            {
+                "name": "Python Developer",
+                "alternate_url": "https://example.com/python",
+                "salary_from": 100000,
+                "salary_to": 150000,
+                "snippet": {"requirement": "Experience with Python and Django"},
+            },
+            {
+                "name": "Java Developer",
+                "alternate_url": "https://example.com/java",
+                "salary_from": 90000,
+                "salary_to": 120000,
+                "snippet": {"requirement": "Experience with Java and Spring"},
+            },
+        ]
+    }
 
-    api = API_HH()
-    vacancies = api.get_vacancies(search_query, top_n)
-    saver = File_Save(vacancies)
+    # Фильтрация вакансий
+    filtered = filter_vacancies(vacancy_data, ["Python", "Django"])
+    print("Отфильтрованные вакансии:", filtered)
+
+    # Создание объектов Vacancy
+    external_vacancy = ExternalVacancy(
+        title="Python Developer",
+        vacancy_url="https://example.com/python",
+        salary_from=100000,
+        salary_to=150000,
+        description="Experience with Python and Django",
+    )
+
+    hh_vacancy = HHVacancy(
+        name="Python Developer",
+        alternate_url="https://example.com/python",
+        salary_from=100000,
+        salary_to=150000,
+        requirement="Experience with Python and Django",
+    )
+
+    # Сохранение в JSON
+    saver = JSONSaver(vacancy_data)
     saver.save_to_file()
-    vacancies["items"] = filter_word(vacancies, filter_words)
 
-    for i in vacancies["items"]:
-        salary_from = 0
-        salary_to = 0
-        if i.get("salary"):
-            salary_from = i["salary"].get("from") or 0
-            salary_to = i["salary"].get("to") or 0
-
-        vacancy = Vacancy(i["name"], i["alternate_url"], salary_from, salary_to, i["snippet"]["requirement"])
-        print(vacancy)
+    # Добавление отдельной вакансии
+    saver.add_vacancy(hh_vacancy.main_data())
 
 
-main()
+if __name__ == "__main__":
+    main()
