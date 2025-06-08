@@ -1,6 +1,5 @@
 import pytest
 import os
-import json
 from src.saver_class import JSONSaver
 from src.hh_class import Vacancy
 
